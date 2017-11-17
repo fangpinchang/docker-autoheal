@@ -5,7 +5,7 @@ DOCKER_SOCK=/tmp/docker.sock
 TMP_DIR=/tmp/restart
 
 if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
-  
+
   mkdir $TMP_DIR
 
   # https://docs.docker.com/engine/api/v1.25/
@@ -21,6 +21,9 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
     }
   fi
 
+  echo "Waiting for ${AUTO_HEAL_INITIAL_WAIT:=30} second(s) before starting to monitor containers"
+  sleep ${AUTO_HEAL_INITIAL_WAIT}
+  
   echo "Monitoring containers for unhealthy status"
   while true; do
     sleep ${AUTOHEAL_INTERVAL:=5}
@@ -40,6 +43,8 @@ if [ "$1" = 'autoheal' ] && [ -e ${DOCKER_SOCK} ]; then
         curl -f --no-buffer -s -XPOST --unix-socket ${DOCKER_SOCK} http://localhost/containers/${CONTAINER}/restart && rm "$TMP_DIR/$CONTAINER" || echo "$DATE Restarting container ${CONTAINER:0:12} failed"
     done
   done
+
+  echo "Good-bye!"
 
 else
   exec "$@"
